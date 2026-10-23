@@ -2,13 +2,16 @@
 
 const STORAGE_KEY = "interview-study-planner-progress-v1";
 const TOTAL_QUESTIONS = 466;
+const TOTAL_DAYS = 15;
+const LEGACY_TOTAL_DAYS = 20;
+const CURRENT_STORAGE_VERSION = 2;
+const STUDY_START_DATE = new Date(2026, 9, 23);
 
 const subjects = [
   {
     id: "oops",
     name: "OOPs Fundamentals",
     total: 40,
-    dailyCount: () => 2,
     color: "#8974dc",
     tint: "#f1edff",
   },
@@ -16,7 +19,6 @@ const subjects = [
     id: "python",
     name: "Top 100 Python Questions",
     total: 100,
-    dailyCount: () => 5,
     color: "#e4a664",
     tint: "#fff4e9",
   },
@@ -24,7 +26,6 @@ const subjects = [
     id: "advanced-python",
     name: "Advanced Python Questions",
     total: 40,
-    dailyCount: () => 2,
     color: "#66ad91",
     tint: "#eaf6ef",
   },
@@ -32,7 +33,6 @@ const subjects = [
     id: "os",
     name: "Operating Systems",
     total: 106,
-    dailyCount: (day) => (day <= 6 ? 6 : 5),
     color: "#708ed7",
     tint: "#edf2ff",
   },
@@ -40,7 +40,6 @@ const subjects = [
     id: "dbms-sql",
     name: "DBMS + SQL",
     total: 140,
-    dailyCount: () => 7,
     color: "#d47f9a",
     tint: "#fff0f4",
   },
@@ -48,7 +47,6 @@ const subjects = [
     id: "hr",
     name: "HR Questions",
     total: 40,
-    dailyCount: () => 2,
     color: "#63a7bb",
     tint: "#eaf6f8",
   },
@@ -70,11 +68,6 @@ const dayNames = [
   "Growing every day",
   "You've got this",
   "Stay curious",
-  "Your effort is adding up",
-  "Almost there",
-  "Keep believing",
-  "Final stretch",
-  "Your big finish",
 ];
 
 const dayGrid = document.querySelector("#day-grid");
@@ -87,18 +80,73 @@ let storageReady = true;
 let activeFilter = "all";
 let highlightTimer;
 
+function getCalendarStatus(date, today = new Date()) {
+  const dateValue = new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+  const todayValue = new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime();
+  if (dateValue === todayValue) {
+    return "today";
+  }
+  return dateValue > todayValue ? "upcoming" : "past";
+}
+
+function formatStudyDate(date) {
+  return new Intl.DateTimeFormat("en-GB", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  }).format(date);
+}
+
 function buildSchedule() {
+  const extraQuestionCounts = Array(TOTAL_DAYS).fill(0);
+  const extraDaysBySubject = new Map();
+  for (const [subjectIndex, subject] of subjects.entries()) {
+    const extraDays = new Set();
+    const extras = subject.total % TOTAL_DAYS;
+    for (let extra = 0; extra < extras; extra += 1) {
+      let selectedDay = -1;
+      for (let dayIndex = 0; dayIndex < TOTAL_DAYS; dayIndex += 1) {
+        if (extraDays.has(dayIndex)) {
+          continue;
+        }
+
+        const hasFewerExtras =
+          selectedDay === -1 || extraQuestionCounts[dayIndex] < extraQuestionCounts[selectedDay];
+        const winsTie =
+          selectedDay !== -1 &&
+          extraQuestionCounts[dayIndex] === extraQuestionCounts[selectedDay] &&
+          (dayIndex - subjectIndex + TOTAL_DAYS) % TOTAL_DAYS <
+            (selectedDay - subjectIndex + TOTAL_DAYS) % TOTAL_DAYS;
+        if (hasFewerExtras || winsTie) {
+          selectedDay = dayIndex;
+        }
+      }
+
+      extraDays.add(selectedDay);
+      extraQuestionCounts[selectedDay] += 1;
+    }
+    extraDaysBySubject.set(subject.id, extraDays);
+  }
+
   const nextQuestion = Object.fromEntries(subjects.map((subject) => [subject.id, 1]));
-  const days = Array.from({ length: 20 }, (_, index) => {
+  const days = Array.from({ length: TOTAL_DAYS }, (_, index) => {
     const dayNumber = index + 1;
     const tasks = subjects.map((subject) => {
       const first = nextQuestion[subject.id];
-      const count = subject.dailyCount(dayNumber);
+      const count =
+        Math.floor(subject.total / TOTAL_DAYS) +
+        Number(extraDaysBySubject.get(subject.id).has(index));
       const last = first + count - 1;
       nextQuestion[subject.id] = last + 1;
       return { subjectId: subject.id, first, last, count };
     });
-    return { number: dayNumber, title: dayNames[index], tasks };
+    const date = new Date(
+      STUDY_START_DATE.getFullYear(),
+      STUDY_START_DATE.getMonth(),
+      STUDY_START_DATE.getDate() + index
+    );
+    return { number: dayNumber, title: dayNames[index], date, tasks };
   });
 
   for (const subject of subjects) {
@@ -110,6 +158,11 @@ function buildSchedule() {
   const scheduledTotal = subjects.reduce((sum, subject) => sum + subject.total, 0);
   if (scheduledTotal !== TOTAL_QUESTIONS) {
     throw new Error(`The study plan must total ${TOTAL_QUESTIONS} questions.`);
+  }
+
+  const dailyTotals = days.map((day) => day.tasks.reduce((sum, task) => sum + task.count, 0));
+  if (Math.max(...dailyTotals) - Math.min(...dailyTotals) > 1) {
+    throw new Error("Daily question totals must be balanced across the study plan.");
   }
 
   return days;
@@ -135,6 +188,62 @@ function hideStorageError() {
   storageMessage.hidden = true;
 }
 
+function migrateLegacyProgress(legacyCompleted) {
+  const legacyCounts = {
+    oops: () => 2,
+    python: () => 5,
+    "advanced-python": () => 2,
+    os: (dayNumber) => (dayNumber <= 6 ? 6 : 5),
+    "dbms-sql": () => 7,
+    hr: () => 2,
+  };
+  const oldRangesBySubject = Object.fromEntries(subjects.map((subject) => [subject.id, []]));
+  const nextQuestion = Object.fromEntries(subjects.map((subject) => [subject.id, 1]));
+  const legacyTaskKeys = new Set();
+
+  for (let dayNumber = 1; dayNumber <= LEGACY_TOTAL_DAYS; dayNumber += 1) {
+    for (const subject of subjects) {
+      legacyTaskKeys.add(taskKey(dayNumber, subject.id));
+      const first = nextQuestion[subject.id];
+      const last = first + legacyCounts[subject.id](dayNumber) - 1;
+      nextQuestion[subject.id] = last + 1;
+      if (legacyCompleted[taskKey(dayNumber, subject.id)] === true) {
+        oldRangesBySubject[subject.id].push({ first, last });
+      }
+    }
+  }
+
+  if (
+    Object.entries(legacyCompleted).some(
+      ([key, isComplete]) => isComplete !== true || !legacyTaskKeys.has(key)
+    ) ||
+    subjects.some((subject) => nextQuestion[subject.id] - 1 !== subject.total)
+  ) {
+    throw new Error("The saved 20-day progress could not be mapped to its original question ranges.");
+  }
+
+  const migrated = {};
+  for (const day of days) {
+    for (const task of day.tasks) {
+      let nextUncoveredQuestion = task.first;
+      for (const oldRange of oldRangesBySubject[task.subjectId]) {
+        if (oldRange.last < nextUncoveredQuestion) {
+          continue;
+        }
+        if (oldRange.first > nextUncoveredQuestion) {
+          break;
+        }
+        nextUncoveredQuestion = oldRange.last + 1;
+        if (nextUncoveredQuestion > task.last) {
+          migrated[taskKey(day.number, task.subjectId)] = true;
+          break;
+        }
+      }
+    }
+  }
+  return migrated;
+}
+
 function loadProgress() {
   try {
     const stored = window.localStorage.getItem(STORAGE_KEY);
@@ -146,12 +255,31 @@ function loadProgress() {
     if (
       parsed === null ||
       typeof parsed !== "object" ||
-      parsed.version !== 1 ||
+      ![1, CURRENT_STORAGE_VERSION].includes(parsed.version) ||
       parsed.completed === null ||
       typeof parsed.completed !== "object" ||
       Array.isArray(parsed.completed)
     ) {
       throw new Error("The saved progress has an unsupported format.");
+    }
+
+    if (parsed.version === 1) {
+      const migrated = migrateLegacyProgress(parsed.completed);
+      try {
+        window.localStorage.setItem(
+          STORAGE_KEY,
+          JSON.stringify({ version: CURRENT_STORAGE_VERSION, completed: migrated })
+        );
+      } catch (error) {
+        storageReady = false;
+        const detail = error instanceof Error ? error.message : "Unknown storage error.";
+        showStorageError(
+          `Your previous saved progress could not be migrated (${detail}). ` +
+            "It has not been overwritten. Resolve the browser storage issue and reload to try again."
+        );
+        return {};
+      }
+      return migrated;
     }
 
     const restored = {};
@@ -183,7 +311,7 @@ function saveProgress(nextProgress) {
   try {
     window.localStorage.setItem(
       STORAGE_KEY,
-      JSON.stringify({ version: 1, completed: nextProgress })
+      JSON.stringify({ version: CURRENT_STORAGE_VERSION, completed: nextProgress })
     );
     return true;
   } catch (error) {
@@ -229,6 +357,7 @@ function makeSubjectProgressCards() {
 function makeDayCard(day) {
   const allTasksComplete = day.tasks.every((task) => isTaskComplete(day.number, task.subjectId));
   const completedCount = day.tasks.filter((task) => isTaskComplete(day.number, task.subjectId)).length;
+  const calendarStatus = getCalendarStatus(day.date);
   const taskMarkup = day.tasks
     .map((task) => {
       const subject = subjects.find((item) => item.id === task.subjectId);
@@ -255,19 +384,23 @@ function makeDayCard(day) {
     .join("");
 
   return `
-    <article class="day-card${allTasksComplete ? " is-complete" : ""}" id="day-card-${day.number}" data-day-card="${day.number}">
+    <article class="day-card${allTasksComplete ? " is-complete" : ""} is-${calendarStatus}" id="day-card-${day.number}" data-day-card="${day.number}" data-calendar-status="${calendarStatus}">
       <header class="day-card-header">
         <div class="day-heading-group">
           <span class="day-number-badge">${String(day.number).padStart(2, "0")}</span>
           <div>
             <h3 class="day-title">Day ${day.number}</h3>
+            <p class="day-date">${formatStudyDate(day.date)}</p>
             <p class="day-subtitle">${day.title}</p>
           </div>
         </div>
-        <span class="day-progress-label">
-          <span class="day-status-dot" aria-hidden="true"></span>
-          <span data-day-count="${day.number}">${completedCount} / 6 subjects</span>
-        </span>
+        <div class="day-card-status">
+          <span class="day-calendar-indicator" aria-label="${calendarStatus[0].toUpperCase()}${calendarStatus.slice(1)}">${calendarStatus[0].toUpperCase()}${calendarStatus.slice(1)}</span>
+          <span class="day-progress-label">
+            <span class="day-status-dot" aria-hidden="true"></span>
+            <span data-day-count="${day.number}">${completedCount} / 6 subjects</span>
+          </span>
+        </div>
       </header>
       <div class="progress-track day-progress-track" aria-hidden="true">
         <span class="progress-fill" data-day-fill="${day.number}" style="width: ${(completedCount / 6) * 100}%"></span>

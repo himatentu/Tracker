@@ -560,6 +560,10 @@ h3 {
   font-size: 10px;
 }
 
+.study-period {
+  font-size: 9px;
+}
+
 .subject-progress-grid {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -724,6 +728,11 @@ h3 {
   background: linear-gradient(130deg, #fff 72%, #faf8ff);
 }
 
+.day-card.is-today {
+  border-color: #cfc5f5;
+  box-shadow: 0 0 0 2px rgba(144, 124, 228, 0.08), var(--shadow);
+}
+
 .day-card.is-highlighted {
   border-color: #907ce4;
   box-shadow: 0 0 0 4px rgba(144, 124, 228, 0.15), var(--shadow);
@@ -746,7 +755,7 @@ h3 {
 .day-heading-group {
   display: flex;
   min-width: 0;
-  align-items: center;
+  align-items: flex-start;
   gap: 11px;
 }
 
@@ -776,10 +785,46 @@ h3 {
   letter-spacing: -0.2px;
 }
 
+.day-date {
+  margin: 3px 0 0;
+  color: #716b7e;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1.4;
+}
+
 .day-subtitle {
   margin: 3px 0 0;
   color: #9c98a7;
   font-size: 10px;
+}
+
+.day-card-status {
+  display: flex;
+  flex: 0 0 auto;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 7px;
+}
+
+.day-calendar-indicator {
+  padding: 3px 8px;
+  border-radius: 999px;
+  background: #f2f0f6;
+  color: #898597;
+  font-size: 9px;
+  font-weight: 700;
+  line-height: 1.3;
+}
+
+.day-card.is-today .day-calendar-indicator {
+  background: #f1edff;
+  color: #725fce;
+}
+
+.day-card.is-upcoming .day-calendar-indicator {
+  background: #eaf6ef;
+  color: #58a378;
 }
 
 .day-progress-label {
