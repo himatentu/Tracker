@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta
+      name="description"
+      content="A calm, encouraging 20-day interview preparation study planner."
+    />
+    <meta name="theme-color" content="#f7f5ff" />
+    <title>20-Day Interview Prep Planner</title>
+    <link rel="stylesheet" href="style.css" />
+    <script src="script.js" defer></script>
+  </head>
+  <body>
+    <div class="page-shell">
+      <header class="topbar">
+        <a class="brand" href="#" aria-label="Studyspace home">
+          <span class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" fill="none">
+              <path d="M4.75 5.75A2.75 2.75 0 0 1 7.5 3h11.75v15.25H7.5a2.75 2.75 0 0 0-2.75 2.75V5.75Z" />
+              <path d="M4.75 18.25A2.75 2.75 0 0 1 7.5 15.5h11.75M8.75 7.5h6.5M8.75 10.5h6.5" />
+            </svg>
+          </span>
+          <span>studyspace<span class="brand-period">.</span></span>
+        </a>
+        <div class="topbar-note">
+          <span class="status-dot" aria-hidden="true"></span>
+          Your progress is saved on this device
+        </div>
+      </header>
+
+      <main>
+        <section class="hero" aria-labelledby="page-title">
+          <div class="hero-copy">
+            <p class="eyebrow"><span aria-hidden="true">✦</span> YOUR NEXT CHAPTER STARTS HERE</p>
+            <h1 id="page-title">A little progress<br />goes a <span>long way.</span></h1>
+            <p class="hero-description">
+              Twenty focused days. Six subjects. One confident step closer to your next opportunity.
+            </p>
+            <button class="button button-primary continue-button" id="continue-button" type="button">
+              Continue studying
+              <svg aria-hidden="true" viewBox="0 0 20 20" fill="none">
+                <path d="M4 10h12m-5-5 5 5-5 5" />
+              </svg>
+            </button>
+          </div>
+          <div class="hero-art" aria-hidden="true">
+            <div class="hero-orbit orbit-one"></div>
+            <div class="hero-orbit orbit-two"></div>
+            <div class="hero-spark spark-one">✦</div>
+            <div class="hero-spark spark-two">✧</div>
+            <div class="hero-book">
+              <div class="book-spine"></div>
+              <div class="book-page">
+                <span class="book-line line-long"></span>
+                <span class="book-line"></span>
+                <span class="book-line line-short"></span>
+                <span class="book-check">✓</span>
+              </div>
+            </div>
+            <div class="floating-note note-top"><span>✦</span> one day at a time</div>
+            <div class="floating-note note-bottom"><span class="note-check">✓</span> you've got this</div>
+          </div>
+        </section>
+
+        <div class="storage-message" id="storage-message" role="alert" hidden></div>
+
+        <section class="dashboard-section" aria-labelledby="overview-title">
+          <div class="section-heading dashboard-heading">
+            <div>
+              <p class="eyebrow">YOUR OVERVIEW</p>
+              <h2 id="overview-title">Look how far you've come</h2>
+            </div>
+            <p class="motivation" id="motivation-message" aria-live="polite"></p>
+          </div>
+
+          <div class="dashboard-grid">
+            <article class="overview-card overall-card">
+              <div class="overall-topline">
+                <div>
+                  <span class="card-label">Overall progress</span>
+                  <p class="overall-number"><span id="completion-percent">0</span><span class="percent-sign">%</span></p>
+                </div>
+                <div class="overall-icon" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none">
+                    <path d="M12 3.5 14.6 8.8l5.9.9-4.25 4.15 1 5.85L12 16.9l-5.25 2.8 1-5.85L3.5 9.7l5.9-.9L12 3.5Z" />
+                  </svg>
+                </div>
+              </div>
+              <div
+                class="progress-track overall-track"
+                role="progressbar"
+                aria-label="Overall question completion"
+                aria-valuemin="0"
+                aria-valuemax="466"
+                aria-valuenow="0"
+                id="overall-progress"
+              >
+                <span class="progress-fill" id="overall-progress-fill"></span>
+              </div>
+              <p class="progress-caption"><strong id="completed-questions">0</strong> of 466 questions completed</p>
+            </article>
+
+            <article class="overview-card stat-card">
+              <div class="stat-icon lavender-icon" aria-hidden="true">✓</div>
+              <span class="card-label">Questions completed</span>
+              <p class="stat-number" id="completed-stat">0</p>
+              <p class="stat-caption">You're building momentum</p>
+            </article>
+
+            <article class="overview-card stat-card">
+              <div class="stat-icon peach-icon" aria-hidden="true">↗</div>
+              <span class="card-label">Still to explore</span>
+              <p class="stat-number" id="remaining-stat">466</p>
+              <p class="stat-caption">One question at a time</p>
+            </article>
+
+            <article class="overview-card stat-card days-stat-card">
+              <div class="stat-icon mint-icon" aria-hidden="true">✦</div>
+              <span class="card-label">Days completed</span>
+              <p class="stat-number"><span id="completed-days">0</span><span class="stat-total"> / 20</span></p>
+              <p class="stat-caption">Every day counts</p>
+            </article>
+          </div>
+        </section>
+
+        <section class="subjects-section" aria-labelledby="subjects-title">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow">THE BIG PICTURE</p>
+              <h2 id="subjects-title">Progress by subject</h2>
+            </div>
+            <p class="section-aside">Every checkbox brings you closer.</p>
+          </div>
+          <div class="subject-progress-grid" id="subject-progress-grid"></div>
+        </section>
+
+        <section class="planner-section" aria-labelledby="planner-title">
+          <div class="section-heading planner-heading">
+            <div>
+              <p class="eyebrow">YOUR STUDY PLAN</p>
+              <h2 id="planner-title">Twenty days, made doable</h2>
+              <p class="section-description">Check off a subject when you've finished its questions for the day.</p>
+            </div>
+            <div class="planner-controls">
+              <div class="filter-group" role="group" aria-label="Filter study days">
+                <button class="filter-button is-active" type="button" data-filter="all" aria-pressed="true">All days <span>20</span></button>
+                <button class="filter-button" type="button" data-filter="pending" aria-pressed="false">Pending</button>
+                <button class="filter-button" type="button" data-filter="completed" aria-pressed="false">Completed</button>
+              </div>
+              <button class="button button-reset" id="reset-button" type="button">
+                <svg aria-hidden="true" viewBox="0 0 20 20" fill="none">
+                  <path d="M4.5 7.5A6 6 0 1 1 4 11m.5-7v3.5H8" />
+                </svg>
+                Reset progress
+              </button>
+            </div>
+          </div>
+          <div class="day-grid" id="day-grid" aria-live="polite"></div>
+          <p class="empty-filter" id="empty-filter" hidden>No days in this view just yet. Keep going — you've got this!</p>
+        </section>
+
+        <section class="routine-section" aria-labelledby="routine-title">
+          <div class="routine-intro">
+            <p class="eyebrow">A GENTLE DAILY RHYTHM</p>
+            <h2 id="routine-title">Make space for your goals</h2>
+            <p>A little structure can make a big difference. Follow your energy, and remember to take breaks.</p>
+          </div>
+          <div class="routine-list">
+            <article class="routine-item">
+              <span class="routine-time morning-time">08:00 AM</span>
+              <span class="routine-icon morning-icon" aria-hidden="true">☀</span>
+              <div><h3>Morning focus</h3><p>OOPs Fundamentals + Top 100 Python</p></div>
+            </article>
+            <article class="routine-item">
+              <span class="routine-time afternoon-time">01:00 PM</span>
+              <span class="routine-icon afternoon-icon" aria-hidden="true">◒</span>
+              <div><h3>Afternoon session</h3><p>Operating Systems + Advanced Python</p></div>
+            </article>
+            <article class="routine-item">
+              <span class="routine-time evening-time">05:00 PM</span>
+              <span class="routine-icon evening-icon" aria-hidden="true">☾</span>
+              <div><h3>Evening wrap-up</h3><p>DBMS + SQL + HR Questions</p></div>
+            </article>
+            <article class="routine-item">
+              <span class="routine-time night-time">09:00 PM</span>
+              <span class="routine-icon night-icon" aria-hidden="true">✧</span>
+              <div><h3>Quick revision</h3><p>Revisit your notes and celebrate today's progress</p></div>
+            </article>
+          </div>
+        </section>
+
+        <section class="celebration-card" id="celebration-card" aria-live="polite" hidden>
+          <span class="celebration-stars" aria-hidden="true">✦ ✧ ✦</span>
+          <p class="eyebrow">YOU DID IT!</p>
+          <h2>466 questions. All yours.</h2>
+          <p>You've shown up, kept going, and made it through. Be proud of what you've accomplished!</p>
+        </section>
+      </main>
+
+      <footer class="site-footer">
+        <span class="footer-mark" aria-hidden="true">✦</span>
+        <p>Made with care for your next big opportunity.</p>
+        <span class="footer-note">Your progress stays right here on this device.</span>
+      </footer>
+    </div>
+  </body>
+</html>
